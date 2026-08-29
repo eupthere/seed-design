@@ -199,7 +199,7 @@ function parsePropertyDeclaration(
 
   const valueLit = parseValueAs(declaredType, lhValue, context);
   switch (valueLit.kind) {
-    case "ColorHexLit":
+    case "ColorLit":
       return factory.createColorPropertyDeclaration(property, valueLit);
 
     case "DimensionLit":

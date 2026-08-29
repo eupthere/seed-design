@@ -86,11 +86,11 @@ describe("resolveToken", () => {
 
     expect(resultLight).toEqual({
       path: ["$color.bg.layer-1", "$color.palette.gray-00"],
-      value: { kind: "ColorHexLit", value: "#ffffff" },
+      value: { kind: "ColorLit", format: "hex", space: "srgb", value: "#ffffff" },
     } satisfies ResolvedTokenResult);
     expect(resultDark).toEqual({
       path: ["$color.bg.layer-1", "$color.palette.gray-00"],
-      value: { kind: "ColorHexLit", value: "#000000" },
+      value: { kind: "ColorLit", format: "hex", space: "srgb", value: "#000000" },
     } satisfies ResolvedTokenResult);
   });
 
@@ -137,11 +137,71 @@ describe("resolveToken", () => {
 
     expect(resultLight).toEqual({
       path: ["$color.bg.layer-default", "$color.bg.layer-1", "$color.palette.gray-00"],
-      value: { kind: "ColorHexLit", value: "#ffffff" },
+      value: { kind: "ColorLit", format: "hex", space: "srgb", value: "#ffffff" },
     } satisfies ResolvedTokenResult);
     expect(resultDark).toEqual({
       path: ["$color.bg.layer-default", "$color.bg.layer-1", "$color.palette.gray-00"],
-      value: { kind: "ColorHexLit", value: "#000000" },
+      value: { kind: "ColorLit", format: "hex", space: "srgb", value: "#000000" },
+    } satisfies ResolvedTokenResult);
+  });
+
+  it("should resolve to an oklch/hsl referenced token, preserving format", () => {
+    const input: Authoring.TokensModel = {
+      kind: "Tokens",
+      metadata: {
+        name: "tokens",
+        id: "id",
+      },
+      data: {
+        collection: "color",
+        tokens: {
+          "$color.palette.red-500": {
+            values: {
+              light: "oklch(65% 0.18 25)",
+              dark: "hsl(358 74% 59% / 80%)",
+            },
+          },
+          "$color.bg.brand": {
+            values: {
+              light: "$color.palette.red-500",
+              dark: "$color.palette.red-500",
+            },
+          },
+        },
+      },
+    };
+
+    const parsed = buildContext([
+      {
+        fileName: "tokens",
+        ast: Authoring.fromObject(input),
+      },
+    ]);
+    const resultLight = resolveToken(parsed, "$color.bg.brand", { color: "light" });
+    const resultDark = resolveToken(parsed, "$color.bg.brand", { color: "dark" });
+
+    expect(resultLight).toEqual({
+      path: ["$color.bg.brand", "$color.palette.red-500"],
+      value: {
+        kind: "ColorLit",
+        format: "oklch",
+        space: "oklab",
+        lightness: 65,
+        chroma: 0.18,
+        hue: 25,
+      },
+    } satisfies ResolvedTokenResult);
+    expect(resultDark).toEqual({
+      path: ["$color.bg.brand", "$color.palette.red-500"],
+      value: {
+        kind: "ColorLit",
+        format: "hsl",
+        space: "srgb",
+        hue: 358,
+        saturation: 74,
+        lightness: 59,
+        alpha: 0.8,
+      },
     } satisfies ResolvedTokenResult);
   });
 });
@@ -360,6 +420,43 @@ describe("getTypeResolvedSourceFile", () => {
     const result = transformResolvedType(ctx, data[1]!.ast) as AST.TokensDocument;
 
     expect(result.data.find((x) => x.kind === "UnresolvedTokenDeclaration")).toBeUndefined();
+  });
+
+  it("should resolve an oklch-aliased token into a ColorTokenDeclaration, not left Unresolved", () => {
+    const data: SourceFile[] = [
+      {
+        fileName: "collection",
+        ast: Authoring.fromObject({
+          kind: "TokenCollections",
+          metadata: { name: "collection", id: "id" },
+          data: [{ name: "color", modes: [{ id: "light" }, { id: "dark" }] }],
+        }),
+      },
+      {
+        fileName: "tokens",
+        ast: Authoring.fromObject({
+          kind: "Tokens",
+          metadata: { name: "tokens", id: "id" },
+          data: {
+            collection: "color",
+            tokens: {
+              "$color.palette.red-500": {
+                values: { light: "oklch(65% 0.18 25)", dark: "oklch(65% 0.18 25)" },
+              },
+              "$color.bg.brand": {
+                values: { light: "$color.palette.red-500", dark: "$color.palette.red-500" },
+              },
+            },
+          },
+        }),
+      },
+    ];
+    const ctx = buildContext(data);
+
+    const result = transformResolvedType(ctx, data[1]!.ast) as AST.TokensDocument;
+    const brand = result.data.find((decl) => decl.token.identifier === "$color.bg.brand");
+
+    expect(brand?.kind).toBe("ColorTokenDeclaration");
   });
 
   it("should get type resolved ComponentSpec file", () => {

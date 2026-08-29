@@ -1,6 +1,28 @@
 import type { AST, Authoring, Exchange } from "../../parser";
 import { compactObject } from "../../utils/compact";
 
+/**
+ * Exchange's `ColorLit` is a shipped external contract (`#${string}` only —
+ * see parser/exchange/types.ts), read by non-JS/native consumers who can't
+ * run this package's generators. A non-hex ColorLit reaching here means a
+ * token author skipped `excludeFromExchange: true` on an hsl/oklch token —
+ * fail loudly instead of silently emitting `undefined`.
+ */
+function colorValueForExchange(
+  color: AST.ColorLit | AST.TokenLit,
+): Exchange.ColorLit | AST.TokenRef {
+  if (color.kind === "TokenLit") {
+    return color.identifier;
+  }
+  if (color.format !== "hex") {
+    throw new Error(
+      `Exchange format only supports hex colors, but got "${color.format}". ` +
+        `Mark this token with excludeFromExchange: true, or use a hex value.`,
+    );
+  }
+  return color.value;
+}
+
 export function getModel(
   ast: AST.TokensDocument | AST.TokenCollectionsDocument | AST.ComponentSpecDocument,
 ): Exchange.Model {
@@ -41,7 +63,7 @@ export function getTokensModel(ast: AST.TokensDocument): Exchange.TokensModel {
         for (const { mode, value } of decl.values) {
           valueMap[mode] = {
             type: "color",
-            value: value.kind === "ColorHexLit" ? value.value : value.identifier,
+            value: colorValueForExchange(value),
           };
         }
         break;
@@ -90,10 +112,7 @@ export function getTokensModel(ast: AST.TokensDocument): Exchange.TokensModel {
             value:
               value.kind === "ShadowLit"
                 ? value.layers.map((layer) => ({
-                    color:
-                      layer.color.kind === "ColorHexLit"
-                        ? layer.color.value
-                        : layer.color.identifier,
+                    color: colorValueForExchange(layer.color),
                     offsetX: { value: layer.offsetX.value, unit: layer.offsetX.unit },
                     offsetY: { value: layer.offsetY.value, unit: layer.offsetY.unit },
                     blur: { value: layer.blur.value, unit: layer.blur.unit },
@@ -110,8 +129,7 @@ export function getTokensModel(ast: AST.TokensDocument): Exchange.TokensModel {
             value:
               value.kind === "GradientLit"
                 ? value.stops.map((stop) => ({
-                    color:
-                      stop.color.kind === "ColorHexLit" ? stop.color.value : stop.color.identifier,
+                    color: colorValueForExchange(stop.color),
                     position: stop.position.value,
                   }))
                 : value.identifier,
@@ -149,7 +167,7 @@ export function getComponentSpecModel(ast: AST.ComponentSpecDocument): Exchange.
       case "ColorPropertyDeclaration":
         return {
           type: "color",
-          value: prop.value.kind === "ColorHexLit" ? prop.value.value : prop.value.identifier,
+          value: colorValueForExchange(prop.value),
         };
       case "DimensionPropertyDeclaration":
         return {
@@ -188,8 +206,7 @@ export function getComponentSpecModel(ast: AST.ComponentSpecDocument): Exchange.
           value:
             prop.value.kind === "ShadowLit"
               ? prop.value.layers.map((layer) => ({
-                  color:
-                    layer.color.kind === "ColorHexLit" ? layer.color.value : layer.color.identifier,
+                  color: colorValueForExchange(layer.color),
                   offsetX: { value: layer.offsetX.value, unit: layer.offsetX.unit },
                   offsetY: { value: layer.offsetY.value, unit: layer.offsetY.unit },
                   blur: { value: layer.blur.value, unit: layer.blur.unit },
@@ -203,8 +220,7 @@ export function getComponentSpecModel(ast: AST.ComponentSpecDocument): Exchange.
           value:
             prop.value.kind === "GradientLit"
               ? prop.value.stops.map((stop) => ({
-                  color:
-                    stop.color.kind === "ColorHexLit" ? stop.color.value : stop.color.identifier,
+                  color: colorValueForExchange(stop.color),
                   position: stop.position.value,
                 }))
               : prop.value.identifier,

@@ -16,6 +16,34 @@ describe("parseValue", () => {
     expect(result).toEqual(factory.createColorHexLit("#ff0000ff"));
   });
 
+  it("should parse an hsl color value", () => {
+    const colorValue: Document.Color = "hsl(358 74% 59%)";
+    const result = parseValue(colorValue);
+    expect(result).toEqual(factory.createColorHslLit(358, 74, 59));
+  });
+
+  it("should parse an hsl color value with alpha", () => {
+    const colorValue: Document.Color = "hsl(358 74% 59% / 80%)";
+    const result = parseValue(colorValue);
+    expect(result).toEqual(factory.createColorHslLit(358, 74, 59, 0.8));
+  });
+
+  it("should parse an oklch color value", () => {
+    const colorValue: Document.Color = "oklch(65% 0.18 25)";
+    const result = parseValue(colorValue);
+    expect(result).toEqual(factory.createColorOklchLit(65, 0.18, 25));
+  });
+
+  it("should parse an oklch color value with alpha", () => {
+    const colorValue: Document.Color = "oklch(65% 0.18 25 / 80%)";
+    const result = parseValue(colorValue);
+    expect(result).toEqual(factory.createColorOklchLit(65, 0.18, 25, 0.8));
+  });
+
+  it("should reject a malformed oklch color value", () => {
+    expect(() => parseValue("oklch(65% 0.18)" as Document.Color)).toThrow();
+  });
+
   it("should parse a dimension value", () => {
     const dimensionValue: Document.Dimension = "10px";
     const result = parseValue(dimensionValue);

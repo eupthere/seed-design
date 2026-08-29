@@ -10,6 +10,7 @@ import type {
 } from "../parser/ast";
 import { convertToKebabCase } from "../utils/string";
 import { kebabCase } from "change-case";
+import { stringifyColorLit } from "./css";
 
 // AST에서 가져온 TokenDeclaration 타입을 사용합니다
 
@@ -24,8 +25,8 @@ function gradientToColorStops(gradient: GradientLit, prefix?: string): string {
   return gradient.stops
     .map((stop) => {
       let color: string;
-      if (stop.color.kind === "ColorHexLit") {
-        color = stop.color.value;
+      if (stop.color.kind === "ColorLit") {
+        color = stringifyColorLit(stop.color);
       } else {
         const tokenId = stop.color.identifier.replace(/\$/g, "").replace(/\./g, "-");
         const prefixPart = prefix ? `${prefix}-` : "";

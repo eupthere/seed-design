@@ -8,7 +8,7 @@ interface ValidationResult {
 
 // this might live in ast.ts later but not sure: *Lit["kind"] already shows its type
 const LITERAL_KIND_TO_TYPE: Record<ValueLit["kind"], PropertySchemaDeclaration["type"]> = {
-  ColorHexLit: "color",
+  ColorLit: "color",
   DimensionLit: "dimension",
   NumberLit: "number",
   EnumLit: "enum",

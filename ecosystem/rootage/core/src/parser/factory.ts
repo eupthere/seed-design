@@ -1,5 +1,8 @@
 import type {
   ColorHexLit,
+  ColorHslLit,
+  ColorOklchLit,
+  ColorLit,
   DimensionLit,
   DurationLit,
   NumberLit,
@@ -63,8 +66,50 @@ import type {
  */
 export function createColorHexLit(value: `#${string}`): ColorHexLit {
   return {
-    kind: "ColorHexLit",
+    kind: "ColorLit",
+    format: "hex",
+    space: "srgb",
     value,
+  };
+}
+
+/**
+ * ColorHslLit factory
+ */
+export function createColorHslLit(
+  hue: number,
+  saturation: number,
+  lightness: number,
+  alpha?: number,
+): ColorHslLit {
+  return {
+    kind: "ColorLit",
+    format: "hsl",
+    space: "srgb",
+    hue,
+    saturation,
+    lightness,
+    alpha,
+  };
+}
+
+/**
+ * ColorOklchLit factory
+ */
+export function createColorOklchLit(
+  lightness: number,
+  chroma: number,
+  hue: number,
+  alpha?: number,
+): ColorOklchLit {
+  return {
+    kind: "ColorLit",
+    format: "oklch",
+    space: "oklab",
+    lightness,
+    chroma,
+    hue,
+    alpha,
   };
 }
 
@@ -126,7 +171,7 @@ export function createCubicBezierLit(
  * ShadowLayerLit factory
  */
 export function createShadowLayerLit(
-  color: ColorHexLit | TokenLit,
+  color: ColorLit | TokenLit,
   offsetX: DimensionLit,
   offsetY: DimensionLit,
   blur: DimensionLit,
@@ -156,7 +201,7 @@ export function createShadowLit(layers: ShadowLayerLit[]): ShadowLit {
  * GradientStopLit factory
  */
 export function createGradientStopLit(
-  color: ColorHexLit | TokenLit,
+  color: ColorLit | TokenLit,
   position: NumberLit,
 ): GradientStopLit {
   return {
@@ -213,7 +258,7 @@ export function createTokenLit(identifier: string): TokenLit {
  */
 export function createColorPropertyDeclaration(
   property: string,
-  value: ColorHexLit | TokenLit,
+  value: ColorLit | TokenLit,
 ): ColorPropertyDeclaration {
   return {
     kind: "ColorPropertyDeclaration",
@@ -767,7 +812,7 @@ export function createTokenDeclaration(
  */
 export function createColorTokenValueDeclaration(
   mode: string,
-  value: ColorHexLit | TokenLit,
+  value: ColorLit | TokenLit,
 ): ColorTokenValueDeclaration {
   return {
     kind: "ColorTokenValueDeclaration",

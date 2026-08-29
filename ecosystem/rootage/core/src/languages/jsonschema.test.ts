@@ -267,7 +267,7 @@ test("getJsonSchema should generate jsonschema for component spec", () => {
         },
         "colorShorthand": {
           "type": "string",
-          "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$"
+          "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|hsl\\\\(\\\\s*(-?\\\\d+(?:\\\\.\\\\d+)?)\\\\s+(\\\\d+(?:\\\\.\\\\d+)?%)\\\\s+(\\\\d+(?:\\\\.\\\\d+)?%)(?:\\\\s*/\\\\s*(\\\\d+(?:\\\\.\\\\d+)?%)\\\\s*)?\\\\)|oklch\\\\(\\\\s*(\\\\d+(?:\\\\.\\\\d+)?%)\\\\s+(\\\\d+(?:\\\\.\\\\d+)?)\\\\s+(-?\\\\d+(?:\\\\.\\\\d+)?)(?:\\\\s*/\\\\s*(\\\\d+(?:\\\\.\\\\d+)?%)\\\\s*)?\\\\))$"
         },
         "dimensionShorthand": {
           "type": "string",

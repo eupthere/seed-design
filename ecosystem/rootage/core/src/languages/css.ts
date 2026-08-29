@@ -1,4 +1,5 @@
 import type {
+  ColorLit,
   CubicBezierLit,
   GradientLit,
   ShadowLit,
@@ -7,6 +8,27 @@ import type {
   TokenLit,
   ValueLit,
 } from "../parser/ast";
+
+/**
+ * hex carries its own exact CSS syntax already (it round-trips verbatim);
+ * hsl/oklch store parsed components, so they're reconstructed into CSS
+ * function syntax here — same pattern as ShadowLit/GradientLit already use
+ * for their own structured fields.
+ */
+export function stringifyColorLit(color: ColorLit): string {
+  switch (color.format) {
+    case "hex":
+      return color.value;
+    case "hsl": {
+      const alpha = color.alpha === undefined ? "" : ` / ${color.alpha * 100}%`;
+      return `hsl(${color.hue} ${color.saturation}% ${color.lightness}%${alpha})`;
+    }
+    case "oklch": {
+      const alpha = color.alpha === undefined ? "" : ` / ${color.alpha * 100}%`;
+      return `oklch(${color.lightness}% ${color.chroma} ${color.hue}${alpha})`;
+    }
+  }
+}
 
 function stringifyCubicBezierLit(expr: CubicBezierLit): string {
   return `cubic-bezier(${expr.value.join(", ")})`;
@@ -22,7 +44,7 @@ function stringifyShadowLit(expr: ShadowLit, tokenReference?: (token: TokenLit) 
         }
         colorValue = tokenReference(item.color);
       } else {
-        colorValue = item.color.value;
+        colorValue = stringifyColorLit(item.color);
       }
       return `${item.offsetX.value}${item.offsetX.unit} ${item.offsetY.value}${item.offsetY.unit} ${item.blur.value}${item.blur.unit} ${item.spread.value}${item.spread.unit} ${colorValue}`;
     })
@@ -42,7 +64,7 @@ function stringifyGradientLit(
         }
         colorValue = tokenReference(item.color);
       } else {
-        colorValue = item.color.value;
+        colorValue = stringifyColorLit(item.color);
       }
       return `${colorValue} ${item.position.value * 100}%`;
     })
@@ -50,8 +72,8 @@ function stringifyGradientLit(
 }
 
 function stringifyValueLit(expr: ValueLit, tokenReference?: (token: TokenLit) => string): string {
-  if (expr.kind === "ColorHexLit") {
-    return expr.value;
+  if (expr.kind === "ColorLit") {
+    return stringifyColorLit(expr);
   }
 
   if (expr.kind === "DimensionLit") {

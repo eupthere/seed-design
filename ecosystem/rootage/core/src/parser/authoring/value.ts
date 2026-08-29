@@ -25,17 +25,72 @@ function isHexColor(expr: unknown): expr is Document.Color {
   return regex.test(expr);
 }
 
-function parseColor(expr: unknown): AST.ColorHexLit | AST.TokenLit | null {
+// Reusable pattern pieces, named so both the regexes below and each other
+// read like the CSS syntax they match instead of a wall of backslashes.
+// `String.raw` avoids double-escaping every backslash for JS-string-in-regex.
+const UNSIGNED_NUMBER = String.raw`\d+(?:\.\d+)?`;
+const NUMBER = String.raw`-?${UNSIGNED_NUMBER}`;
+const PERCENT = String.raw`${UNSIGNED_NUMBER}%`;
+const ALPHA = String.raw`(?:\s*/\s*(?<alpha>${PERCENT})\s*)?`;
+
+// Modern space-separated syntax only (`hsl(h s% l%)`), not the legacy
+// comma-separated form (`hsl(h, s%, l%)`) — matches how the design tokens
+// this parses are actually authored today. Legacy syntax support, if ever
+// needed, is a separate additive change.
+//
+// Exported as a *source* string (unanchored, no `^$`) rather than a compiled
+// RegExp so `languages/jsonschema.ts` can splice it into the editor-hint
+// schema's `colorShorthand` pattern — one definition instead of two
+// hand-typed copies that would silently drift apart.
+export const HSL_PATTERN_SOURCE = String.raw`hsl\(\s*(?<hue>${NUMBER})\s+(?<saturation>${PERCENT})\s+(?<lightness>${PERCENT})${ALPHA}\)`;
+const HSL_REGEX = new RegExp(`^${HSL_PATTERN_SOURCE}$`, "i");
+
+function parseHslColor(expr: unknown): AST.ColorHslLit | null {
+  if (typeof expr !== "string") {
+    return null;
+  }
+  const groups = expr.match(HSL_REGEX)?.groups;
+  if (!groups) {
+    return null;
+  }
+  return factory.createColorHslLit(
+    Number.parseFloat(groups.hue!),
+    Number.parseFloat(groups.saturation!),
+    Number.parseFloat(groups.lightness!),
+    groups.alpha !== undefined ? Number.parseFloat(groups.alpha) / 100 : undefined,
+  );
+}
+
+export const OKLCH_PATTERN_SOURCE = String.raw`oklch\(\s*(?<lightness>${PERCENT})\s+(?<chroma>${UNSIGNED_NUMBER})\s+(?<hue>${NUMBER})${ALPHA}\)`;
+const OKLCH_REGEX = new RegExp(`^${OKLCH_PATTERN_SOURCE}$`, "i");
+
+function parseOklchColor(expr: unknown): AST.ColorOklchLit | null {
+  if (typeof expr !== "string") {
+    return null;
+  }
+  const groups = expr.match(OKLCH_REGEX)?.groups;
+  if (!groups) {
+    return null;
+  }
+  return factory.createColorOklchLit(
+    Number.parseFloat(groups.lightness!),
+    Number.parseFloat(groups.chroma!),
+    Number.parseFloat(groups.hue!),
+    groups.alpha !== undefined ? Number.parseFloat(groups.alpha) / 100 : undefined,
+  );
+}
+
+function parseColor(expr: unknown): AST.ColorLit | AST.TokenLit | null {
   // Try token first
   const token = parseToken(expr);
   if (token) {
     return token;
   }
-  // Then try hex color
+  // Then try each literal color format
   if (isHexColor(expr)) {
     return factory.createColorHexLit(expr);
   }
-  return null;
+  return parseHslColor(expr) || parseOklchColor(expr);
 }
 
 function parseDimension(expr: unknown): AST.DimensionLit | null {

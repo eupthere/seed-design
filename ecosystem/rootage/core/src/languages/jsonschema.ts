@@ -1,5 +1,19 @@
 import dedent from "dedent";
 import type { TokenDeclaration, TokenLit } from "../parser/ast";
+import { HSL_PATTERN_SOURCE, OKLCH_PATTERN_SOURCE } from "../parser/authoring/value";
+import { stringifyColorLit } from "./css";
+
+/**
+ * Adapts a parser regex source string for embedding as a JSON Schema
+ * `pattern`: strips `(?<name>...)` capture names (meaningless here — this
+ * regex only ever gets a boolean match test, and combining the hsl/oklch
+ * sources into one alternation would otherwise duplicate names like `hue`
+ * across branches, which not every regex engine consuming this schema can
+ * be assumed to support), then doubles backslashes for JSON string escaping.
+ */
+function toSchemaPattern(source: string): string {
+  return source.replace(/\?<[^>]+>/g, "").replace(/\\/g, "\\\\");
+}
 
 function stringifyTokenExpression(token: TokenLit): string {
   return `$${token.group.join(".")}.${token.key}`;
@@ -9,8 +23,8 @@ function getReadableValue(value: TokenDeclaration["values"][number]["value"]): s
   switch (value.kind) {
     case "TokenLit":
       return stringifyTokenExpression(value);
-    case "ColorHexLit":
-      return value.value;
+    case "ColorLit":
+      return value.format === "hex" ? value.value : stringifyColorLit(value);
     case "GradientLit":
       return value.stops
         .map(
@@ -270,7 +284,7 @@ export function getJsonSchema(tokens: TokenDeclaration[]): string {
       },
       "colorShorthand": {
         "type": "string",
-        "pattern": "^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$"
+        "pattern": "^(#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?|${toSchemaPattern(HSL_PATTERN_SOURCE)}|${toSchemaPattern(OKLCH_PATTERN_SOURCE)})$"
       },
       "dimensionShorthand": {
         "type": "string",

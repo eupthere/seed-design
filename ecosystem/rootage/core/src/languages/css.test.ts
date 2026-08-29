@@ -14,6 +14,36 @@ test("stringifier.tokenReference should stringify token expression", () => {
   expect(result).toEqual("var(--test-color-bg-layer-1)");
 });
 
+test("stringifier.value should stringify hex color expression", () => {
+  const result = value(factory.createColorHexLit("#e5484d"));
+
+  expect(result).toEqual("#e5484d");
+});
+
+test("stringifier.value should stringify hsl color expression", () => {
+  const result = value(factory.createColorHslLit(358, 74, 59));
+
+  expect(result).toEqual("hsl(358 74% 59%)");
+});
+
+test("stringifier.value should stringify hsl color expression with alpha", () => {
+  const result = value(factory.createColorHslLit(358, 74, 59, 0.8));
+
+  expect(result).toEqual("hsl(358 74% 59% / 80%)");
+});
+
+test("stringifier.value should stringify oklch color expression", () => {
+  const result = value(factory.createColorOklchLit(65, 0.18, 25));
+
+  expect(result).toEqual("oklch(65% 0.18 25)");
+});
+
+test("stringifier.value should stringify oklch color expression with alpha", () => {
+  const result = value(factory.createColorOklchLit(65, 0.18, 25, 0.8));
+
+  expect(result).toEqual("oklch(65% 0.18 25 / 80%)");
+});
+
 test("stringifier.value should stringify shadow expression", () => {
   const shadow = factory.createShadowLit([
     factory.createShadowLayerLit(

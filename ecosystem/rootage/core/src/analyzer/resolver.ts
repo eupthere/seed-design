@@ -91,7 +91,7 @@ export function transformResolvedType<T extends AST.Node | AST.Node[]>(
           [node.collection]: valueDecl.mode,
         });
         switch (resolved.value.kind) {
-          case "ColorHexLit":
+          case "ColorLit":
             return factory.createColorTokenValueDeclaration(valueDecl.mode, valueDecl.value);
           case "DimensionLit":
             return factory.createDimensionTokenValueDeclaration(valueDecl.mode, valueDecl.value);
@@ -126,7 +126,7 @@ export function transformResolvedType<T extends AST.Node | AST.Node[]>(
             .modes[0]!.id,
       });
       switch (resolved.value.kind) {
-        case "ColorHexLit":
+        case "ColorLit":
           return factory.createColorPropertyDeclaration(node.property, node.value);
         case "DimensionLit":
           return factory.createDimensionPropertyDeclaration(node.property, node.value);

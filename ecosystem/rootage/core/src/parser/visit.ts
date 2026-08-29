@@ -7,7 +7,7 @@ export function visitNode(node: Node, fn: (node: Node) => Node): Node {
 
 export function visitEachChild<T extends Node>(node: T, fn: (node: Node) => Node): T {
   switch (node.kind) {
-    case "ColorHexLit":
+    case "ColorLit":
     case "DimensionLit":
     case "NumberLit":
     case "EnumLit":

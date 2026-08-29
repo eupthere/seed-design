@@ -1,10 +1,42 @@
 export type TokenRef = `$${string}`;
 
 // Literal
+//
+// `format` names the source syntax (hex / hsl / oklch); `space` names the
+// underlying color model it belongs to. hex and hsl are both sRGB — converting
+// between them is pure arithmetic, no gamut mapping — while oklch is a
+// genuinely different space (OKLab). Keeping the two axes separate (rather
+// than collapsing into one `space` field) is what lets a future space (e.g.
+// CMYK for print) or a future format of an existing space (e.g. `rgb()`) slot
+// in without re-deriving which axis a generator actually cares about.
 export interface ColorHexLit {
-  kind: "ColorHexLit";
+  kind: "ColorLit";
+  format: "hex";
+  space: "srgb";
   value: `#${string}`;
 }
+
+export interface ColorHslLit {
+  kind: "ColorLit";
+  format: "hsl";
+  space: "srgb";
+  hue: number;
+  saturation: number;
+  lightness: number;
+  alpha?: number;
+}
+
+export interface ColorOklchLit {
+  kind: "ColorLit";
+  format: "oklch";
+  space: "oklab";
+  lightness: number;
+  chroma: number;
+  hue: number;
+  alpha?: number;
+}
+
+export type ColorLit = ColorHexLit | ColorHslLit | ColorOklchLit;
 
 export interface DimensionLit {
   kind: "DimensionLit";
@@ -39,7 +71,7 @@ export interface CubicBezierLit {
 
 export interface ShadowLayerLit {
   kind: "ShadowLayerLit";
-  color: ColorHexLit | TokenLit;
+  color: ColorLit | TokenLit;
   offsetX: DimensionLit;
   offsetY: DimensionLit;
   blur: DimensionLit;
@@ -53,7 +85,7 @@ export interface ShadowLit {
 
 export interface GradientStopLit {
   kind: "GradientStopLit";
-  color: ColorHexLit | TokenLit;
+  color: ColorLit | TokenLit;
   position: NumberLit;
 }
 
@@ -63,7 +95,7 @@ export interface GradientLit {
 }
 
 export type ValueLit =
-  | ColorHexLit
+  | ColorLit
   | DimensionLit
   | DurationLit
   | NumberLit
@@ -104,7 +136,7 @@ export interface ColorTokenDeclaration {
 export interface ColorTokenValueDeclaration {
   kind: "ColorTokenValueDeclaration";
   mode: string;
-  value: ColorHexLit | TokenLit;
+  value: ColorLit | TokenLit;
 }
 
 export interface DimensionTokenDeclaration {
@@ -253,7 +285,7 @@ export interface TokenCollectionsDocument {
 export interface ColorPropertyDeclaration {
   kind: "ColorPropertyDeclaration";
   property: string;
-  value: ColorHexLit | TokenLit;
+  value: ColorLit | TokenLit;
 }
 
 export interface DimensionPropertyDeclaration {
@@ -407,7 +439,7 @@ export interface ComponentSpecDocument {
 }
 
 export type Node =
-  | ColorHexLit
+  | ColorLit
   | DimensionLit
   | DurationLit
   | NumberLit

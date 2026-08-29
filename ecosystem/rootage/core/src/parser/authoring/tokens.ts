@@ -1,5 +1,5 @@
 import type {
-  ColorHexLit,
+  ColorLit,
   CubicBezierLit,
   DimensionLit,
   DurationLit,
@@ -39,13 +39,13 @@ export function parseTokenDeclarations(data: Document.TokensData): TokenDeclarat
     // Depending on `baseType`, pick the appropriate TokenDeclaration kind.
     // TODO: We should try to resolve TokenLit types from references.
     switch (baseKind) {
-      case "ColorHexLit":
+      case "ColorLit":
         out.push(
           factory.createColorTokenDeclaration(
             collectionName,
             factory.createTokenLit(tokenRef),
             modeValues.map(({ mode, value }) =>
-              factory.createColorTokenValueDeclaration(mode, value as ColorHexLit | TokenLit),
+              factory.createColorTokenValueDeclaration(mode, value as ColorLit | TokenLit),
             ),
             tokenData.description,
             tokenData.excludeFromExchange,
